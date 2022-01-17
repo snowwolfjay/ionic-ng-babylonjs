@@ -1,0 +1,7 @@
+{
+  "name": "xft",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
