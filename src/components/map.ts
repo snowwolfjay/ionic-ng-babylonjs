@@ -50,20 +50,20 @@ const createBuilding = (
   hoz = 0
 ) => {
   const h = lv * BUILDING_LEVEL_HEIGHT;
-  const geo = new BoxGeometry(w, d, h);
-  // geo.translate(lat, lon, h / 2 + hoz);
+  const geo = new BoxGeometry(w, h, d);
+  geo.translate(lat, h / 2 + hoz, lon);
   const obj = new Mesh(geo, bmat);
   // var axes = new AxesHelper(20);
   // obj.add(axes);
   // scene.add(obj);
-  const bfgeo = new BoxGeometry(w, d, 0.2, w / 0.1);
+  const bfgeo = new BoxGeometry(w, 0.2, d, w / 0.1);
   const floor = new Mesh(bfgeo, fmat);
   for (let i = lv; i--; ) {
     const ff = floor.clone();
     // floor.rotateX(Math.PI / 2);
-    // ff.translateX(lat);
-    // ff.translateY(hoz + i * BUILDING_LEVEL_HEIGHT);
-    // ff.translateZ(lon);
+    ff.translateX(lat);
+    ff.translateY(hoz + i * BUILDING_LEVEL_HEIGHT);
+    ff.translateZ(lon);
     obj.add(ff);
   }
   obj.name = "jianz";
@@ -88,21 +88,21 @@ const createGuarder = (scene: Scene, d: any, lat = 0, lon = 0, lv = 1) => {
   obj.translateZ(lon);
   obj.addEventListener("click", console.log);
   // scene.add(obj);
-  head.name = body.name = obj.name = d?.name || "保安";
+  obj.name = d?.name || "保安";
   Object.assign(obj.userData, d, { intable: true });
-  head.userData = body.userData = obj.userData;
+  // head.userData = body.userData = obj.userData; head.name = body.name = 
   return obj;
 };
 
 export const initScene = (canvas: HTMLCanvasElement) => {
-  // const scene = new Scene();
-  // const camera = new PerspectiveCamera(
-  //   75,
-  //   window.innerWidth / window.innerHeight,
-  //   0.1,
-  //   1000
-  // );
-  // const control = new OrbitControls(camera, canvas);
+  const scene = new Scene();
+  const camera = new PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  const control = new OrbitControls(camera, canvas);
 
   const myCanvas = ThreeRenderObjects({
     controlType: "orbit",
@@ -120,7 +120,7 @@ export const initScene = (canvas: HTMLCanvasElement) => {
   // var axes = new AxesHelper(20);
   // scene.add(axes);
   // createSun(scene);
-  const scene = myCanvas.scene();
+  // const scene = myCanvas.scene();
   // myCanvas.cameraPosition({x:20,y:-20,z:100})
   objects.push(createBuilding(scene, 40, 15, 22, -80, 0));
   objects.push(createBuilding(scene, 40, 15, 12, -40, 0));
@@ -139,29 +139,30 @@ export const initScene = (canvas: HTMLCanvasElement) => {
   points.push(new Vector3(-10, 0, 0));
   points.push(new Vector3(0, 10, 0));
   points.push(new Vector3(10, 0, 0));
-
+  myCanvas.onClick(console.log)
   const geometry = new BufferGeometry().setFromPoints(points);
 
   const line = new Line(geometry, lmat);
   // scene.add(line);
 
-  // const g4 = createGuarder(scene, { name: "小二" }, -100, 0, -1);
+  const g4 = createGuarder(scene, { name: "小二" }, -100, 0, -1);
   // camera.position.y = 45;
   // camera.position.z = 70;
   // camera.position.x = 20;
-  myCanvas.cameraPosition({ x: 70, y: 45, z: 20 });
+  objects.push(g4)
+  myCanvas.cameraPosition({ x: 0, y: 100, z: 160 });
   const raycaster = new Raycaster();
   const pointer = new Vector2(-1, -1);
   let dir = 1;
   const render = () => {
-    // const tx = g4.position.x + (dir ? 0.1 : -0.1);
-    // if (tx > 100) {
-    //   dir = 0;
-    // } else if (tx < -100) {
-    //   dir = 1;
-    // } else {
-    //   g4.position.x = tx;
-    // }
+    const tx = g4.position.x + (dir ? 0.1 : -0.1);
+    if (tx > 100) {
+      dir = 0;
+    } else if (tx < -100) {
+      dir = 1;
+    } else {
+      g4.position.x = tx;
+    }
   };
   let changed = false;
   function animate() {
