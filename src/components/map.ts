@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   BufferGeometry,
+  Color,
   CylinderGeometry,
   DirectionalLight,
   DirectionalLightHelper,
@@ -9,6 +10,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshNormalMaterial,
+  MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
   PointLight,
@@ -23,74 +25,53 @@ import {
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { animate, easeInOut } from "popmotion";
-import { toastController } from "@ionic/core";
-import { BehaviorSubject } from "rxjs";
-import ThreeRenderObjects from "three-render-objects";
+import * as TWEEN from "@tweenjs/tween.js";
+import { BehaviorSubject, Subject, Subscription } from "rxjs";
+import { buildBuilding, Building, BuildingManager } from "./Building";
+import { GuardManager } from "./Guard";
+import React from "react";
 
-const BUILDING_LEVEL_HEIGHT = 6;
+const BUILDING_LEVEL_HEIGHT = 8;
 
 const buildGround = (width: number, height: number) => {
   const geo = new BoxGeometry(width, 1, height);
-  const mat = new MeshNormalMaterial({ transparent: true, opacity: 0.5 });
+  const mat = new MeshNormalMaterial({ transparent: true, opacity: 0.3 });
   const obj = new Mesh(geo, mat);
   obj.position.add(new Vector3(0, -0.5, 0));
   return obj;
 };
 
-const bmat = new MeshNormalMaterial({ transparent: true, opacity: 0.5 });
-const fmat = new MeshNormalMaterial({ opacity: 0.5, colorWrite: true });
-const createBuilding = (
-  scene: Scene,
-  w: number,
-  d: number,
-  lv: number,
-  lat: number,
-  lon: number,
-  hoz = 0
-) => {
-  const h = lv * BUILDING_LEVEL_HEIGHT;
-  const geo = new BoxGeometry(w, h, d);
-  geo.translate(lat, h / 2 + hoz, lon);
-  const obj = new Mesh(geo, bmat);
-  // var axes = new AxesHelper(20);
-  // obj.add(axes);
-  // scene.add(obj);
-  const bfgeo = new BoxGeometry(w, 0.2, d, w / 0.1);
-  const floor = new Mesh(bfgeo, fmat);
-  for (let i = lv; i--; ) {
-    const ff = floor.clone();
-    // floor.rotateX(Math.PI / 2);
-    ff.translateX(lat);
-    ff.translateY(hoz + i * BUILDING_LEVEL_HEIGHT);
-    ff.translateZ(lon);
-    obj.add(ff);
-  }
-  obj.name = "jianz";
-  // obj.userData.intable = true
-  return obj;
-};
+const bmat = new MeshNormalMaterial({ transparent: true, opacity: 0.3 });
+const fmat = new MeshNormalMaterial({
+  transparent: true,
+  opacity: 0.3,
+});
 
 const createGuarder = (scene: Scene, d: any, lat = 0, lon = 0, lv = 1) => {
   const obj = new Object3D();
-  const geo = new SphereGeometry(1);
+  const bgeo = new CylinderGeometry(0.5, 0.5, 3);
+  const box = new Mesh(bgeo);
+  bgeo.translate(0, 1.5, 0);
+  box.visible = false;
+  const geo = new SphereGeometry(0.5);
   const mat = new MeshBasicMaterial({ color: 0xffff00 });
   const head = new Mesh(geo, mat);
-  geo.translate(0, 3, 0);
-
+  geo.translate(0, 1.5, 0);
+  obj.add(box);
   obj.add(head);
-  const geometry = new CylinderGeometry(1, 1, 4);
-  const material = new MeshBasicMaterial({ color: 0x0000ff });
+  const geometry = new CylinderGeometry(0.5, 0.5, 2);
+  const material = new MeshBasicMaterial({ color: 0xff0000 });
   const body = new Mesh(geometry, material);
   obj.add(body);
-  obj.translateY(2 + (lv - 1) * BUILDING_LEVEL_HEIGHT);
+  obj.translateY(1 + (lv - 1) * BUILDING_LEVEL_HEIGHT);
   obj.translateX(lat);
   obj.translateZ(lon);
   obj.addEventListener("click", console.log);
-  // scene.add(obj);
-  obj.name = d?.name || "保安";
-  Object.assign(obj.userData, d, { intable: true });
-  // head.userData = body.userData = obj.userData; head.name = body.name = 
+  // scene.add(obj); body.name = obj.name =
+  box.name = d?.name || "保安";
+  Object.assign(box.userData, d, { intable: true, type: "baoan" });
   return obj;
 };
 
@@ -103,56 +84,53 @@ export const initScene = (canvas: HTMLCanvasElement) => {
     1000
   );
   const control = new OrbitControls(camera, canvas);
-
-  const myCanvas = ThreeRenderObjects({
-    controlType: "orbit",
-    rendererConfig: { antialias: true, alpha: true },
-  })(canvas);
-
+  const fcontrol = new PointerLockControls(camera, canvas);
   const change$$ = new BehaviorSubject<{ action: string; data?: any }>({
     action: "",
   });
+  let currentControl: OrbitControls | PointerLockControls = control;
   const ground = buildGround(200, 80);
   const objects = [];
-  // objects.push([ground]);
-  // const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-  // renderer.setSize(window.innerWidth * 2, window.innerHeight * 2);
-  // var axes = new AxesHelper(20);
-  // scene.add(axes);
-  // createSun(scene);
-  // const scene = myCanvas.scene();
-  // myCanvas.cameraPosition({x:20,y:-20,z:100})
-  objects.push(createBuilding(scene, 40, 15, 22, -80, 0));
-  objects.push(createBuilding(scene, 40, 15, 12, -40, 0));
-  objects.push(createBuilding(scene, 40, 15, 12, 40, 0));
-  objects.push(createBuilding(scene, 40, 15, 22, 80, 0));
-  objects.push(
-    createBuilding(scene, 200, 80, 3, 0, 0, -BUILDING_LEVEL_HEIGHT * 3)
-  );
-  objects.push(createGuarder(scene, { name: "小王" }));
-  objects.push(createGuarder(scene, { name: "小李" }, 30, 0, 2));
-  objects.push(createGuarder(scene, { name: "小张" }, -100, 0, 10));
+  // objects.push(ground
+  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth * 2, window.innerHeight * 2);
+
+  const originPoint = new Vector3(0, 0, 0);
+  const buildings: { [key: string]: Building } = {};
+  [
+    ["b1", 40, 15, 22, -80],
+    ["b2", 40, 15, 12, -38],
+    ["b3", 40, 15, 12, 38],
+    ["b4", 40, 15, 22, 80],
+    ["ud", 200, 80, 3, 0, 0, -BUILDING_LEVEL_HEIGHT * 3 - 0.3],
+  ].forEach((data, index) => {
+    const bm = BuildingManager.current;
+    bm.add(data[0] as string, data.slice(1, 4) as any)
+      .moveTo(...(data.slice(4) as any))
+      .addToScene(scene);
+  });
+  [
+    { name: "小王", id: "1", coords: [] },
+    { name: "小李", id: "2", coords: [30, 0] },
+    { name: "小张", id: "3", coords: [-100, 0] },
+  ].forEach((el) => {
+    const gm = GuardManager.current;
+    gm.add(el.id, el.coords).enterZone(24).addToScene(scene).setData(el);
+  });
+  // objects.push(createGuarder(scene, { name: "小王" }));
+  // objects.push(createGuarder(scene, { name: "小李" }, 30, 0, 2));
+  // objects.push(createGuarder(scene, { name: "小张" }, -100, 0, 10));
   canvas.style.width = "100vw";
   canvas.style.height = "100vh";
-  const lmat = new LineBasicMaterial({ color: 0x0000ff });
-  const points = [];
-  points.push(new Vector3(-10, 0, 0));
-  points.push(new Vector3(0, 10, 0));
-  points.push(new Vector3(10, 0, 0));
-  myCanvas.onClick(console.log)
-  const geometry = new BufferGeometry().setFromPoints(points);
-
-  const line = new Line(geometry, lmat);
-  // scene.add(line);
 
   const g4 = createGuarder(scene, { name: "小二" }, -100, 0, -1);
-  // camera.position.y = 45;
-  // camera.position.z = 70;
-  // camera.position.x = 20;
-  objects.push(g4)
-  myCanvas.cameraPosition({ x: 0, y: 100, z: 160 });
+  const cameraInit = [45, 190, 120] as [number, number, number];
+  camera.position.set(...cameraInit);
+  objects.push(g4);
+  control.update();
   const raycaster = new Raycaster();
   const pointer = new Vector2(-1, -1);
+  scene.background = new Color("gray");
   let dir = 1;
   const render = () => {
     const tx = g4.position.x + (dir ? 0.1 : -0.1);
@@ -165,74 +143,98 @@ export const initScene = (canvas: HTMLCanvasElement) => {
     }
   };
   let changed = false;
-  function animate() {
+  control.maxDistance = 1000;
+  control.minDistance = 10;
+  control.minPolarAngle = (Math.PI ) / 6;
+  control.maxPolarAngle = (Math.PI * 0.99) / 2;
+  function animate(time: number) {
     requestAnimationFrame(animate);
     render();
     // setTimeout(() => {
     //   animate()
     // }, 50);
-    // control.update();
-    // renderer.render(scene, camera);
-    myCanvas.tick();
+    (currentControl as any)?.update?.();
+    renderer.render(scene, camera);
+    TWEEN.update(time);
   }
   console.log(objects);
-  myCanvas.objects(objects);
-  document.addEventListener("mouseleave", () => {
+  // scene.add(fcontrol.getObject());
+  objects.forEach((el) => scene.add(el));
+  canvas.addEventListener("mouseleave", () => {
     pointer.x = -1;
     pointer.y = -1;
     console.log("leave");
   });
   //
-  //
-  document.body.style.cursor = "pointer";
-  // document.addEventListener("click", (ev) => {
-  //   pointer.x = (ev.clientX / window.innerWidth) * 2 - 1;
-  //   pointer.y = -(ev.clientY / window.innerHeight) * 2 + 1;
-  //   console.log(ev);
-  //   console.log(pointer);
-  //   raycaster.setFromCamera(pointer, camera);
-  //   console.time("check");
-  //   const intersects = raycaster
-  //     .intersectObjects(scene.children, true)
-  //     .filter((el) => el.object.userData?.intable);
-  //   console.timeEnd("check");
-  //   if (intersects.length) {
-  //     const obj = intersects[0].object;
-  //     // INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-  //     // INTERSECTED.material.emissive.setHex(0xff0000);
-  //     change$$.next({
-  //       action: "pick",
-  //       data: obj.userData,
-  //     });
-  //     // setTimeout(() => {
-  //     //   alert(`clicked ${obj.name}`);
-  //     // }, 10);
-  //     // const toast = document.createElement('ion-toast');
-  //     // toast.message = 'Your settings have been saved.';
-  //     // toast.duration = 2000;
-  //     // document.body.appendChild(toast);
-  //     // toast.onload = () =>console.error(toast)
-  //     // return toast.present();
-  //     // present(`点了${obj.name}`)
+  control.minZoom = 0.5;
+  control.maxZoom = 3;
+  canvas.style.cursor = "pointer";
+  let ap: any = null;
+  const click$$ = new Subject<PointerEvent>();
+  const longpress$$ = new Subject<PointerEvent>();
+  canvas.addEventListener("pointerdown", (ev) => {
+    ap = ev;
+  });
+  canvas.addEventListener("pointerup", (ev) => {
+    if (ap) {
+      if (ev.timeStamp - ap.timeStamp < 300) click$$.next(ev);
+      else longpress$$.next(ev);
+      ap = null;
+    }
+  });
+  canvas.addEventListener("pointercancel", () => (ap = null));
+  canvas.addEventListener("pointerout", () => (ap = null));
+  canvas.addEventListener("pointerleave", () => (ap = null));
+  let sub: Subscription | null;
+  let tween: any;
+  let cur: any;
+  const quit = () => {
+    sub?.unsubscribe();
+    change$$.next({ action: "reset" });
+    currentControl = control;
+    control.enabled = true;
+    cur = null;
+  };
+  click$$.subscribe((ev) => {
+    pointer.x = (ev.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+    // console.log(ev);
+    // console.log(pointer);
+    raycaster.setFromCamera(pointer, camera);
+    console.time("check");
+    const olist = raycaster.intersectObjects(scene.children, true);
+    console.log(olist);
+    const list = olist.filter((el) => el.object.userData?.intable);
+    console.timeEnd("check");
+    console.log(list);
+    if (list.length) {
+      const obj = list[0].object as Mesh<any, MeshStandardMaterial>;
+      change$$.next({
+        action: "pick",
+        data: obj.userData,
+      });
+      if (obj.userData?.type === "floor") {
+        if (cur) return quit();
+        cur = obj;
+        sub?.unsubscribe();
+        currentControl = fcontrol;
+        sub = Building.focusLevel(obj, currentControl).subscribe((v) => {
+          console.log(v);
+        });
+        control.enabled = false;
+      }
+      console.log(obj.userData);
+    } else {
+      quit();
+    }
+  });
 
-  //     // toastController
-  //     //   .create({ message: `点了${obj.name}`, duration: 2000 })
-  //     //   .then((a) => {
-  //     //     console.log(a);
-  //     //     a.present();
-  //     //   });
-  //   } else {
-  //     change$$.next({ action: "reset" });
-  //   }
-  // });
-  animate();
+  requestAnimationFrame(animate);
   // console.log(scene);
   window.onresize = () => {
-    // camera.aspect = window.innerWidth / window.innerHeight;
-    // camera.updateProjectionMatrix();
-    // renderer.setSize(window.innerWidth, window.innerHeight);
-    myCanvas.renderer().setSize(window.innerWidth, window.innerHeight);
-    myCanvas.camera().updateMatrixWorld();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
   };
   return {
     // dispose() {
@@ -242,22 +244,3 @@ export const initScene = (canvas: HTMLCanvasElement) => {
     change$$,
   };
 };
-function createSun(scene: Scene) {
-  const pointLight = new DirectionalLight(0xff0000, 0.5);
-  pointLight.position.set(0, 20, 20);
-  // scene.add(pointLight);
-
-  const sphereSize = 1;
-  const pointLightHelper = new DirectionalLightHelper(pointLight, sphereSize);
-  scene.add(pointLightHelper);
-}
-
-function createLight(scene: Scene) {
-  const pointLight = new PointLight(0xff0000, 1111, 200);
-  pointLight.position.set(60, 60, 60);
-  scene.add(pointLight);
-
-  const sphereSize = 1;
-  const pointLightHelper = new PointLightHelper(pointLight, sphereSize);
-  scene.add(pointLightHelper);
-}
