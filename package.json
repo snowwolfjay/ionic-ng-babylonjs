@@ -7,6 +7,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production --vendor-chunk=true",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
@@ -19,6 +20,14 @@
     "@angular/platform-browser": "~13.0.0",
     "@angular/platform-browser-dynamic": "~13.0.0",
     "@angular/router": "~13.0.0",
+    "@babylonjs/core": "^5.0.0-beta.4",
+    "@babylonjs/gui": "^5.0.0-beta.4",
+    "@babylonjs/inspector": "^5.0.0-beta.4",
+    "@babylonjs/loaders": "^5.0.0-beta.4",
+    "@babylonjs/materials": "^5.0.0-beta.4",
+    "@babylonjs/post-processes": "^5.0.0-beta.4",
+    "@babylonjs/procedural-textures": "^5.0.0-beta.4",
+    "@babylonjs/serializers": "^5.0.0-beta.4",
     "@capacitor/app": "1.1.0",
     "@capacitor/core": "3.4.0",
     "@capacitor/haptics": "1.1.4",
@@ -40,10 +49,11 @@
     "@angular/compiler-cli": "~13.0.0",
     "@angular/language-service": "~13.0.0",
     "@capacitor/cli": "3.4.0",
-    "@ionic/angular-toolkit": "^5.0.0",
+    "@ionic/angular-toolkit": "^5.0.0-beta.4.0",
     "@types/jasmine": "~3.6.0",
     "@types/jasminewd2": "~2.0.3",
     "@types/node": "^12.11.1",
+    "@types/offscreencanvas": "^2019.6.4",
     "@typescript-eslint/eslint-plugin": "5.3.0",
     "@typescript-eslint/parser": "5.3.0",
     "eslint": "^7.6.0",
@@ -60,7 +70,8 @@
     "karma-jasmine-html-reporter": "^1.5.0",
     "protractor": "~7.0.0",
     "ts-node": "~8.3.0",
-    "typescript": "~4.4.4"
+    "typescript": "^4.4.2",
+    "webgl-strict-types": "^1.0.5"
   },
   "description": "An Ionic project"
 }

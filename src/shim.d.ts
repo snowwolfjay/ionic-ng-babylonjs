@@ -1,0 +1,2 @@
+interface WebGLObject {}
+interface NavigatorUserMediaErrorCallback {}
