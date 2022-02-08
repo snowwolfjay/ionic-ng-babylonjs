@@ -1,0 +1,41 @@
+<ion-content>
+  <div class="page">
+    <div class="form-container">
+      <form #loginForm="ngForm" novalidate>
+        <div class="input-row">
+          <img src="/assets/icon/username.png" alt="" />
+          <ion-input
+            type="text"
+            id="name"
+            name="name"
+            class="form-control"
+            (focus)="showError=false"
+            required
+            [(ngModel)]="login.username"
+          ></ion-input>
+        </div>
+        <!--  -->
+        <div class="input-row">
+          <img src="/assets/icon/password.png" alt="" />
+          <ion-input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            required
+            (focus)="showError=false"
+            [(ngModel)]="login.password"
+          ></ion-input>
+        </div>
+        <div *ngIf="showError" class="invalid-feedback">登录错误</div>
+        <ion-button
+          class="ion-margin-top"
+          (click)="onLogin(loginForm)"
+          type="submit"
+        >
+          <span class="btn-txt">登录</span>
+        </ion-button>
+      </form>
+    </div>
+  </div>
+</ion-content>

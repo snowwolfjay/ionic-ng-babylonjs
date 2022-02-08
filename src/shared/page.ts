@@ -10,15 +10,15 @@ interface Stopable {
 interface Destoryable {
   destroy(): void;
 }
-type teardown = Function | Unsubscribeable | Stopable | Destoryable;
+type teardown = (() => any) | Unsubscribeable | Stopable | Destoryable;
 const voidFun = () => {};
 
-export class SubTracker {
+export class Process {
   readonly clearCallbacks = new Set<teardown>();
-  private readonly childs: { [key: string]: SubTracker } = {};
+  private readonly childs: { [key: string]: Process } = {};
   constructor(public name?: string) {
     // console.error(`${this.constructor.name} created---`);
-    this.name = name ||  this.constructor.name;
+    this.name = name || this.constructor.name;
   }
   /**
    * @description 执行所有的销毁：Function | Unsubscribeable | Stopable | Destoryable
@@ -42,7 +42,7 @@ export class SubTracker {
   child(name: string) {
     let el = this.childs[name];
     if (!el) {
-      el = new SubTracker();
+      el = new Process();
       this.childs[name] = el;
     }
     return el;
@@ -66,7 +66,9 @@ export class SubTracker {
       else if (typeof el?.stop === 'function') el.stop.call(el);
       else if (typeof el?.unsubscribe === 'function') el.unsubscribe.call(el);
       else if (typeof el?.destroy === 'function') el.destroy.call(el);
-    } catch (error) {}
+    } catch (error) {
+      console.warn(error);
+    }
   }
 }
 @Component({
@@ -74,7 +76,7 @@ export class SubTracker {
   template: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppBaseView extends SubTracker implements OnDestroy {
+export class AppBaseView extends Process implements OnDestroy {
   constructor() {
     super();
     console.log(`${this.constructor.name} created`);

@@ -1,0 +1,14 @@
+<ion-card>
+  <ion-card-content>
+    <div *ngIf="current; else empty">
+      {{ current.id }}
+      {{ current.metadata.name }}
+      {{ current.metadata.bid }}
+    </div>
+    <ng-template #empty>
+      <ion-text>当前没有选择用户</ion-text>
+    </ng-template>
+  </ion-card-content>
+</ion-card>
+
+<div class="opener"></div>
