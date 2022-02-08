@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "xfta",
+	"webDir": "www",
+	"bundledWebRuntime": false
+}
