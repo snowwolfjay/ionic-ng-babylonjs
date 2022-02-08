@@ -1,0 +1,17 @@
+# Meteor packages used by this project, one per line.
+# Check this file (and the other files in this directory) into your repository.
+#
+# 'meteor add' and 'meteor remove' will edit this file for you,
+# but you can also edit it by hand.
+
+meteor-base@1.5.1             # Packages every Meteor app needs to have
+mongo@1.13.0                   # The database Meteor supports right now
+
+ecmascript@0.16.1              # Enable ECMAScript2015+ syntax in app code
+shell-server@0.5.0            # Server-side component of the `meteor shell` command
+
+accounts-base@2.2.0
+accounts-password@2.2.0
+reywood:publish-composite
+matb33:collection-hooks
+typescript@4.4.1

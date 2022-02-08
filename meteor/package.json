@@ -1,0 +1,25 @@
+{
+  "name": "meteor",
+  "private": true,
+  "scripts": {
+    "start": "meteor run",
+    "dev": "set ROOT_URL=http://172.21.16.225:3000& meteor run --port 172.21.16.225:3000",
+    "test": "meteor test --once --driver-package meteortesting:mocha",
+    "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
+    "visualize": "meteor --production --extra-packages bundle-visualizer"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.4",
+    "bcrypt": "^5.0.1",
+    "meteor-node-stubs": "^1.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.4"
+  },
+  "meteor": {
+    "mainModule": {
+      "server": "server/main.ts"
+    },
+    "testModule": "tests/main.ts"
+  }
+}
